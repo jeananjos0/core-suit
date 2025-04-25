@@ -12,7 +12,7 @@ Ele foi projetado para acelerar o desenvolvimento de sistemas que envolvam opera
 Para instalar o CoreSuit na sua máquina:
 
 ```bash
-dotnet new install https://github.com/oliver-soft-tech/core-suit
+dotnet new install https://github.com/jeananjos0/core-suit.git
 ```
 
 Após a instalação, você poderá gerar um novo projeto com:

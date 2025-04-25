@@ -1,70 +1,135 @@
-# Sistema Base - Clean Architecture 
-Este projeto é um **template completo e escalável** de sistema ASP.NET Core com estrutura em Clean
-Architecture.
-Ele serve como base para qualquer novo sistema que envolva operações CRUD, autenticação JWT,
-documentação com Swagger e separação em camadas.
-## Estrutura de Pastas
- - Backend.API # Camada de apresentação (WebAPI)
- - Backend.Application # Regras de negócio e serviços
- - Backend.Domain # Entidades, DTOs e interfaces
- - Backend.Infrastructure # Acesso a dados e contexto EF Core
- - Backend.CrossCutting.IoC # Injeção de dependência
-## Tecnologias Utilizadas
-- ASP.NET Core 9+
+
+# CoreSuit - Sistema Base Clean Architecture 🚀
+
+**CoreSuit** é um **template profissional, completo e escalável** para projetos ASP.NET Core, estruturado seguindo os padrões da **Clean Architecture**.
+
+Ele foi projetado para acelerar o desenvolvimento de sistemas que envolvam operações CRUD, autenticação JWT, documentação via Swagger e separação clara de responsabilidades.
+
+---
+
+## 📦 Como instalar o template
+
+Para instalar o CoreSuit na sua máquina:
+
+```bash
+dotnet new install https://github.com/oliver-soft-tech/core-suit
+```
+
+---
+
+## 🗂 Estrutura de Pastas
+
+- **CoreSuit.API** — Camada de apresentação (WebAPI)
+- **CoreSuit.Application** — Regras de negócio e serviços (Application Layer)
+- **CoreSuit.Domain** — Entidades, DTOs e interfaces de domínio
+- **CoreSuit.Infrastructure** — Acesso a dados e contexto EF Core
+- **CoreSuit.CrossCutting.IoC** — Injeção de dependência e configurações
+
+---
+
+## 🛠 Tecnologias Utilizadas
+
+- ASP.NET Core 9.0+
 - Entity Framework Core
 - PostgreSQL
 - AutoMapper
-- Swagger (Swashbuckle)
-- JWT (Autenticação via Bearer Token)
-- dotenv.net (variáveis de ambiente)
-- Middleware global de tratamento de erros
-## Padrões e Convenções
+- Swashbuckle (Swagger para documentação de APIs)
+- JWT Authentication (Autenticação via Bearer Token)
+- dotenv.net (Gerenciamento de variáveis de ambiente)
+- Middleware global para tratamento de erros
+
+---
+
+## 🎯 Padrões e Convenções Aplicados
+
 - Separação em camadas (API, Application, Domain, Infrastructure)
-- DTOs para entrada e saída de dados
-- Soft Delete (com campo `DeletedAt`)
-- Suporte a Ativação/Reativação de registros
-- Controllers genéricos baseados em `BaseController`
-- Serviços genéricos baseados em `BaseService`
-- Repositórios genéricos baseados em `BaseRepository`
-## Como Executar o Projeto
-1. Crie um arquivo `.env` na raiz do projeto com os seguintes valores:
+- Utilização de DTOs para entrada e saída de dados
+- Soft Delete (campo `DeletedAt` nas entidades)
+- Suporte a Ativação e Reativação de registros
+- Controllers genéricos (`BaseController`)
+- Serviços genéricos (`BaseService`)
+- Repositórios genéricos (`BaseRepository`)
+- Injeção de dependência configurada automaticamente
+
+---
+
+## 🚀 Como Executar um Projeto Base
+
+1. **Crie o arquivo `.env`** na raiz do projeto com as variáveis:
+
+```
 DB_HOST=localhost
 DB_PORT=5432
 DB_USER=postgres
 DB_PASSWORD=123456
-DB_DATABASE=equipment_appointment
-2. Execute o comando para aplicar a primeira migration:
-
+DB_DATABASE=baseDeDados
 ```
+
+2. **Crie a primeira migration do banco de dados**:
+
+```bash
 dotnet ef migrations add FirstMigration --startup-project .\CoreSuit.API\ --project .\CoreSuit.Infrastructure\
 ```
 
-3. Inicie a aplicação com:
+3. **Execute a aplicação**:
+
+```bash
+dotnet run --project .\CoreSuit.API\
 ```
-dotnet run --project .\Backend.API\
+
+A aplicação estará disponível em:  
+👉 `http://localhost`
+
+---
+
+## 📄 Documentação Swagger
+
+Após subir o projeto, acesse:
+
 ```
-A aplicação estará disponível em `http://localhost` (ou conforme configurado).
-## Documentação Swagger
-Acesse `http://localhost/swagger` para visualizar a documentação interativa da API.
-- Todas as rotas padrão de CRUD estarão documentadas.
-- É possível testar endpoints protegidos com JWT inserindo o token no botão "Authorize".
-## Configuração opcional de PathBase
-Se você deseja hospedar o sistema em uma subpasta como `https://dominio.com/Backend`,
-descomente este trecho no `Program.cs`:
+http://localhost/swagger
 ```
+
+- Toda a API CRUD será documentada automaticamente.
+- Você pode autenticar usando JWT através do botão "Authorize" no Swagger.
+
+---
+
+## 🌐 Configuração opcional de PathBase
+
+Se você for hospedar o projeto em uma subpasta (ex.: `https://dominio.com/Backend`), ative o seguinte trecho no `Program.cs`:
+
+```csharp
 // if (!app.Environment.IsDevelopment())
 // {
-// app.Use((context, next) =>
-// {
-// context.Request.PathBase = "/Backend";
-// return next();
-// });
+//     app.Use((context, next) =>
+//     {
+//         context.Request.PathBase = "/Backend";
+//         return next();
+//     });
 // }
 ```
-## Exemplo de Endpoint Customizado
-Você pode herdar `BaseController` e criar endpoints adicionais no seu controller específico:
-[HttpGet("ativos")]public async Task<IActionResult> ObterAtivos(){ var result = await
-_service.ObterSomenteAtivos(); return Ok(result);}
+
 ---
-Desenvolvido por **Cenix** com arquitetura limpa e foco em escalabilidade. Ideal para novos projetos
-.NET!
+
+## ✨ Exemplo de Endpoint Customizado
+
+Você pode adicionar métodos personalizados em qualquer controller:
+
+```csharp
+[HttpGet("ativos")]
+public async Task<IActionResult> ObterAtivos()
+{
+    var result = await _service.ObterSomenteAtivos();
+    return Ok(result);
+}
+```
+
+---
+
+## 💼 Sobre
+
+Desenvolvido por **Jean Oliveira**
+Foco em alta escalabilidade, produtividade, organização e melhores práticas de desenvolvimento .NET.
+
+---

@@ -1,0 +1,170 @@
+trigger:
+  branches:
+    include:
+    - master
+    - homl
+    - dev
+
+pool:
+  name: 'Azure Pipelines'  
+  vmImage: 'ubuntu-latest' 
+
+variables:
+  tag: '$(Build.BuildId)'
+  NewRepoName: '$(VAR_NEWREPONAME)'
+  baseLocation: '$(VAR_BASELOCATION)'
+  project_name: '$(System.TeamProject)'
+  currentProjectId: '$(System.TeamProjectId)'
+  ${{ if eq(variables['Build.SourceBranchName'], 'master') }}:
+    imageTagPrefix: "$(VAR_TYPE_APPLICATION)-prod"
+  ${{ if eq(variables['Build.SourceBranchName'], 'homl') }}:
+    imageTagPrefix: "$(VAR_TYPE_APPLICATION)-homl"
+  ${{ if eq(variables['Build.SourceBranchName'], 'dev') }}:
+    imageTagPrefix: "$(VAR_TYPE_APPLICATION)-dev"
+
+
+stages:
+
+- stage: Setup
+  displayName: "Repository Setup"
+  jobs:
+  - job: CreateAndPopulateRepository
+    displayName: 'Create and Populate Repository'
+    steps:
+    - checkout: self
+    - script: |
+        echo "Configurando autenticação do Git..."
+        git config --global http.extraheader "AUTHORIZATION: bearer $(System.AccessToken)"
+        
+        # Define o nome do novo repositório como fixo
+        REPO_NAME=$(NewRepoName)
+        PROJECTNAME=$(project_name)
+        BASELOCATIONCOD=$(baseLocation)
+        CURRENTPROJECTID_LOCAL=$(currentProjectId)
+        
+        # Verifica se o repositório já existe
+        REPO_CHECK=$(curl -s -X GET \
+          -u :$(System.AccessToken) \
+          "https://dev.azure.com/cenix/$PROJECTNAME/_apis/git/repositories/$REPO_NAME?api-version=6.0" \
+          -H "Content-Type: application/json")
+        
+        if echo "$REPO_CHECK" | jq -e '.message' | grep -q "does not exist or you do not have permissions"; then
+          JSON_DATA='{"name": "'"$REPO_NAME"'", "project": {"id": "'"$CURRENTPROJECTID_LOCAL"'"}}'
+          RESPONSE=$(curl -s -X POST \
+            -u :$(System.AccessToken) \
+            "https://dev.azure.com/cenix/$PROJECTNAME/_apis/git/repositories?api-version=6.0" \
+            -H "Content-Type: application/json" \
+            -d "$JSON_DATA")
+          echo "Resposta da API de criação: $RESPONSE"
+          if echo "$RESPONSE" | jq -e '.message' | grep -q "You need the Git 'CreateRepository'"; then
+            echo "$(System.AccessToken)"
+            echo "Erro ao criar repositório."
+            exit 1
+          fi
+          NEW_REPO_URL=$(echo $RESPONSE | jq -r '.remoteUrl')
+        else
+          echo "Repositório já existe. Usando URL existente."
+          NEW_REPO_URL=$(echo $REPO_CHECK | jq -r '.remoteUrl')
+        fi
+
+        # Verifica se há branches no repositório
+        BRANCHES=$(curl -s -X GET \
+          -u :$(System.AccessToken) \
+          "https://dev.azure.com/cenix/$PROJECTNAME/_apis/git/repositories/$REPO_NAME/refs?filter=heads/$(Build.SourceBranchName)&api-version=6.0" \
+          -H "Content-Type: application/json")
+
+
+        if echo "$BRANCHES" | jq -e '.count' | grep -q 0; then
+          if [[ $NEW_REPO_URL != null && $NEW_REPO_URL != "" ]]; then
+
+            # Clona o repositório base para um diretório temporário
+            git clone https://cenix@dev.azure.com/cenix/Helm/_git/$BASELOCATIONCOD temp-$BASELOCATIONCOD || exit 1
+            
+            # Navega para o diretório do novo repositório
+            cd temp-$BASELOCATIONCOD
+
+            #Verifica se existe o repo se existir ele faz uma edição e faz um commit para nova branch
+
+            if echo "$REPO_CHECK" | jq -e '.url' | grep -q "https"; then
+              # Cria a branch localmente se ela não existir
+              git config user.email $(Build.RequestedForEmail)
+              git config user.name $(Build.RequestedFor)
+              git checkout -b $(Build.SourceBranchName)
+              touch README.md
+              git commit -m "Initial commit on $(Build.SourceBranchName)"
+            else
+              echo "Não existe dados no repositorio apenas clonando o projeto inicialmente..."
+            fi
+
+            # Configuração do repositório remoto para o novo repositório
+            git remote add new-repo $NEW_REPO_URL
+            git push new-repo $(Build.SourceBranchName)
+          else
+            echo "Erro ao obter URL do repositório."
+            exit 1
+          fi
+        else
+            echo "Branches já existem no repositório, pulando configuração..."
+        fi
+      displayName: 'Configure Git and Repository Setup'
+
+- stage: DockerBuildAndPush
+  displayName: "Build and Push Docker Image"
+  dependsOn: Setup
+  condition: succeeded()
+  jobs:
+  - job: BuildPush
+    displayName: "Docker Build and Push"
+    pool:
+      name: 'Azure Pipelines' 
+      vmImage: 'ubuntu-latest' 
+    steps:
+    - checkout: self
+    - task: Docker@2
+      displayName: "Build and Push Docker Image"
+      inputs:
+        containerRegistry: 'docker-hub'
+        repository: $(VAR_DOCKER_REPOSITORY)
+        command: 'buildAndPush'
+        Dockerfile: '**/Dockerfile'
+        tags: |
+          $(imageTagPrefix)-$(tag)
+
+- stage: UpdateHelmAndDeploy
+  displayName: "Update Helm"
+  dependsOn: DockerBuildAndPush
+  condition: succeeded()
+  jobs:
+  - job: FullProcess
+    displayName: "Full Process Job"
+    steps:
+    - checkout: self
+    - script: |
+        # Define o nome do novo repositório como fixo
+        REPO_NAME=$(NewRepoName)
+        PROJECTNAME=$(project_name)
+        
+        git config --global http.extraheader "AUTHORIZATION: bearer $(System.AccessToken)"
+        git config user.email $(Build.RequestedForEmail)
+        git config user.name $(Build.RequestedFor)
+
+        git clone https://cenix@dev.azure.com/cenix/$PROJECTNAME/_git/$REPO_NAME || exit 1
+        cd $REPO_NAME
+
+        ls -la
+
+        sed -i "s/tag:.*/tag: $(imageTagPrefix)-$(tag)/" ./values.yaml
+        sed -i "s/image:.*/image: $(VAR_DOCKER_REPOSITORY)/" ./values.yaml
+
+        cat values.yaml
+        
+        git config --global http.extraheader "AUTHORIZATION: bearer $(System.AccessToken)"
+        git config user.email $(Build.RequestedForEmail)
+        git config user.name $(Build.RequestedFor)
+        git add ./values.yaml
+        git commit -m "Atualizou a tag de imagem para $(imageTagPrefix)-$(tag) em $(Build.SourceBranchName)"
+
+        # Faz o push das mudanças forçando a substituição
+        git push --force origin HEAD:refs/heads/$(Build.SourceBranchName)
+
+      displayName: "Helm Update"

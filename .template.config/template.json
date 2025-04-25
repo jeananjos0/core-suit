@@ -1,0 +1,19 @@
+{
+    "$schema": "http://json.schemastore.org/template",
+    "author": "Jean Oliveira",
+    "classifications": [
+        "Clean Architecture",
+        "API",
+        "Framework",
+        "CoreSuit"
+    ],
+    "identity": "cen.core-suit",
+    "name": "CoreSuit - Clean Architecture Application Base",
+    "shortName": "core-suit",
+    "sourceName": "CoreSuit",
+    "preferNameDirectory": true,
+    "tags": {
+        "language": "C#",
+        "type": "project"
+    }
+}

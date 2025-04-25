@@ -15,6 +15,18 @@ Para instalar o CoreSuit na sua máquina:
 dotnet new install https://github.com/oliver-soft-tech/core-suit
 ```
 
+Após a instalação, você poderá gerar um novo projeto com:
+
+```bash
+dotnet new core-suit --name=MeuProjeto
+```
+
+Também é possível definir a versão do .NET na criação:
+
+```bash
+dotnet new core-suit --name=MeuProjeto --framework=net9.0
+```
+
 ---
 
 ## 🗂 Estrutura de Pastas
@@ -125,11 +137,12 @@ public async Task<IActionResult> ObterAtivos()
 }
 ```
 
+
 ---
 
 ## 💼 Sobre
 
-Desenvolvido por **Jean Oliveira**
+Desenvolvido por **Jean Oliveira** — **Oliver Soft Tech**  
 Foco em alta escalabilidade, produtividade, organização e melhores práticas de desenvolvimento .NET.
 
 ---

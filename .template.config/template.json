@@ -1,19 +1,31 @@
 {
     "$schema": "http://json.schemastore.org/template",
-    "author": "Jean Oliveira",
+    "author": "Jean Oliveira - Oliver Soft Tech",
     "classifications": [
-        "Clean Architecture",
-        "API",
-        "Framework",
-        "CoreSuit"
+      "Clean Architecture",
+      "Web API",
+      "Framework",
+      "CoreSuit",
+      "Backend"
     ],
-    "identity": "cen.core-suit",
+    "identity": "com.oliversofttech.coresuit",
     "name": "CoreSuit - Clean Architecture Application Base",
     "shortName": "core-suit",
+    "description": "Template base com arquitetura limpa para criação de APIs escaláveis em .NET. Ideal para sistemas corporativos com separação em camadas, autenticação JWT, EF Core e Swagger.",
     "sourceName": "CoreSuit",
     "preferNameDirectory": true,
+    "defaultName": "CoreSuitApp",
     "tags": {
-        "language": "C#",
-        "type": "project"
+      "language": "C#",
+      "type": "project"
+    },
+    "symbols": {
+      "framework": {
+        "type": "parameter",
+        "defaultValue": "net9.0",
+        "replaces": "net9.0",
+        "description": "Versão do .NET utilizada no projeto"
+      }
     }
-}
+  }
+  
